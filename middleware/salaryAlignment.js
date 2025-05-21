@@ -3,49 +3,47 @@ import Employee from "../model/Employee.js";
 import EmployeeMilestoneNotification from "../model/milestoneNotification.js"; 
 
 const scheduleAnniversaryCheck = () => {
-  setTimeout(async () => {
+  // Run every day at midnight (00:00)
+  cron.schedule("0 0 * * *", async () => {
     try {
       const employees = await Employee.find();
       const today = new Date();
+
       for (let employee of employees) {
-        
         const hiringDate = new Date(employee.hiringDate);
         const diffYears = today.getFullYear() - hiringDate.getFullYear();
-  
-        if (diffYears >= 3) {
-          const milestoneDate = new Date(hiringDate);
-          milestoneDate.setFullYear(hiringDate.getFullYear() + 3);
+        const sameMonthAndDay =
+          today.getMonth() === hiringDate.getMonth() &&
+          today.getDate() === hiringDate.getDate();
+
+        if (!sameMonthAndDay) continue; // Only check if it's the exact anniversary date
+
+        if (diffYears === 3 && !employee.threeYears) {
           await Employee.findByIdAndUpdate(employee._id, { threeYears: true });
-          await saveMilestoneNotification(employee, "3 years", milestoneDate);
+          await saveMilestoneNotification(employee, "3 years", today);
         }
-  
-        if (diffYears >= 6) {
-          const milestoneDate = new Date(hiringDate);
-          milestoneDate.setFullYear(hiringDate.getFullYear() + 6);
+
+        if (diffYears === 6 && !employee.sixYears) {
           await Employee.findByIdAndUpdate(employee._id, { sixYears: true });
-          await saveMilestoneNotification(employee, "6 years", milestoneDate);
+          await saveMilestoneNotification(employee, "6 years", today);
         }
-  
-        if (diffYears >= 9 ) {
-          const milestoneDate = new Date(hiringDate);
-          milestoneDate.setFullYear(hiringDate.getFullYear() + 9);
-          await Employee.findByIdAndUpdate(employee._id, { nineYears : true });
-          await saveMilestoneNotification(employee, "9 years", milestoneDate);
+
+        if (diffYears === 9 && !employee.nineYears) {
+          await Employee.findByIdAndUpdate(employee._id, { nineYears: true });
+          await saveMilestoneNotification(employee, "9 years", today);
         }
-  
-        if (diffYears >= 12 ) {
-          const milestoneDate = new Date(hiringDate);
-          milestoneDate.setFullYear(hiringDate.getFullYear() + 12);
-          await Employee.findByIdAndUpdate(employee._id,{ twelveYears : true });
-          await saveMilestoneNotification(employee, "12 years", milestoneDate);
+
+        if (diffYears === 12 && !employee.twelveYears) {
+          await Employee.findByIdAndUpdate(employee._id, { twelveYears: true });
+          await saveMilestoneNotification(employee, "12 years", today);
         }
-  
+
         await employee.save();
       }
     } catch (error) {
       console.error("Error updating employee anniversaries:", error);
     }
-  } , 1000);
+  });
 };
 
 // Function to save milestone notification
